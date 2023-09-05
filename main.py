@@ -97,6 +97,7 @@ if __name__ == "__main__":
     parser.add_argument('--random_seed', type=int, default=12345)
     parser.add_argument('--dataset', type=str, default='BJRoad')
     parser.add_argument('--down_scale', type=bool, default=True)
+    parser.add_argument('--cos_lr', type=bool, default=True)
     args = parser.parse_args()
 
     if args.use_gpu:
