@@ -92,7 +92,7 @@ if __name__ == "__main__":
     parser.add_argument('--gpu_ids',  type=str, default='0')
     parser.add_argument('--workers',  type=int, default=0)
     parser.add_argument('--epochs',  type=int, default=30)
-    parser.add_argument('--lam', type=int, default=3e-4)
+    parser.add_argument('--lam', type=float, default=3e-4)
     parser.add_argument('--t', type=float, default=1.0)
     parser.add_argument('--random_seed', type=int, default=12345)
     parser.add_argument('--dataset', type=str, default='BJRoad')
