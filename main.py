@@ -96,7 +96,7 @@ if __name__ == "__main__":
     parser.add_argument('--t', type=float, default=1.0)
     parser.add_argument('--random_seed', type=int, default=12345)
     parser.add_argument('--dataset', type=str, default='BJRoad')
-    parser.add_argument('--down_scale', type=bool, default=True)
+    parser.add_argument('--down_scale', type=bool, default=False)
     parser.add_argument('--cos_lr', type=bool, default=False)
     args = parser.parse_args()
 
