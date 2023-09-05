@@ -129,8 +129,8 @@ class Framework:
             print(f"epoch {epoch}/{epochs}")
 
             train_loss, train_metrics = self.fit_one_epoch(self.train_dl, lam=lam,t=t,mode='training')
-            val_loss, val_metrics = self.fit_one_epoch(self.validation_dl, mode='val')
-            test_loss, test_metrics = self.fit_one_epoch(self.test_dl, mode='testing')
+            val_loss, val_metrics = self.fit_one_epoch(self.validation_dl, lam=lam,t=t,mode='val')
+            test_loss, test_metrics = self.fit_one_epoch(self.test_dl,lam=lam,t=t, mode='testing')
             if val_best_metrics[1] < val_metrics[1]:
                 val_best_metrics = val_metrics
                 test_best_metrics = test_metrics
