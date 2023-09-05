@@ -66,7 +66,7 @@ def train_val_test(args):
     framework.set_test_dl(test_dl)
     framework.set_save_path(WEIGHT_SAVE_DIR)
 
-    framework.fit(lam=args.lam,t=args.t,epochs=args.epochs)
+    framework.fit(cos_lr=args.cos_lr,lam=args.lam,t=args.t,epochs=args.epochs)
 
 
 if __name__ == "__main__":
