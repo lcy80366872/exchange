@@ -54,7 +54,7 @@ def train_val_test(args):
 
     print('lr:',args.lr)
     optimizer = torch.optim.Adam(params=net.parameters(), lr=args.lr)
-    model_init(net, 'resnet34', 2, imagenet=True)
+   # model_init(net, 'resnet34', 2, imagenet=True)
 #     new_state = {}
 #     net.load_state_dict(new_state)
 
