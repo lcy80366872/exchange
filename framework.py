@@ -48,7 +48,7 @@ class Solver:
                     self.mask = Variable(self.mask.cuda())
             else:
                 self.mask = Variable(self.mask.cuda())
-    def optimize_exchange(self):
+    def optimize_exchange(self,lam,t):
         self.net.train()
         self.data2cuda()
 
@@ -63,7 +63,7 @@ class Solver:
                 slim_params.append(param)
                 mean_params.append(torch.mean(param))
 
-        sparse = _compute_polarization_sparsity(slim_params, lbd=3e-4, t=0.6, alpha=1, bn_weights_mean=mean_params)
+        sparse = _compute_polarization_sparsity(slim_params, lbd=lam, t=t, alpha=1, bn_weights_mean=mean_params)
         # L1 spare
         # for name, param in self.net.named_parameters():
         #     if param.requires_grad and name.endswith('weight') and 'bn2' in name:
@@ -119,7 +119,7 @@ class Framework:
     def set_save_path(self, save_path):
         self.save_path = save_path
 
-    def fit(self, epochs, no_optim_epochs=4):
+    def fit(self, epochs, lam,t,no_optim_epochs=4):
         val_best_metrics = test_best_metrics = [0, 0]
         no_optim = 0
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer=self.solver.optimizer, T_max=epochs,
@@ -127,7 +127,7 @@ class Framework:
         for epoch in range(1, epochs + 1):
             print(f"epoch {epoch}/{epochs}")
 
-            train_loss, train_metrics = self.fit_one_epoch(self.train_dl, mode='training')
+            train_loss, train_metrics = self.fit_one_epoch(self.train_dl, lam=lam,t=t,mode='training')
             val_loss, val_metrics = self.fit_one_epoch(self.validation_dl, mode='val')
             test_loss, test_metrics = self.fit_one_epoch(self.test_dl, mode='testing')
             if val_best_metrics[1] < val_metrics[1]:
@@ -162,7 +162,7 @@ class Framework:
         torch.save(val_best_net, os.path.join(self.save_path,
                                               f"epoch{epoch_val}_val{val_best_metrics[1]:.4f}_test{test_best_metrics[1]:.4f}.pth"))
 
-    def fit_one_epoch(self, dataloader, mode='training'):
+    def fit_one_epoch(self, dataloader, lam,t,mode='training'):
         epoch_loss = 0.0
         local_batch_iou = 0.0
         intersection = []
@@ -176,7 +176,7 @@ class Framework:
             self.solver.set_input(img, mask)
             # print('img_data:',img.shape)
             if mode == 'training':
-                pred_map, iter_loss, batch_iou, samples_intersection, samples_union = self.solver.optimize_exchange()
+                pred_map, iter_loss, batch_iou, samples_intersection, samples_union = self.solver.optimize_exchange(lam=lam,t=t)
             else:
                 pred_map, iter_loss, batch_iou, samples_intersection, samples_union = self.solver.test_batch()
 

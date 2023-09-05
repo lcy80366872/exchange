@@ -66,7 +66,7 @@ def train_val_test(args):
     framework.set_test_dl(test_dl)
     framework.set_save_path(WEIGHT_SAVE_DIR)
 
-    framework.fit(epochs=args.epochs)
+    framework.fit(lam=args.lam,t=args.t,epochs=args.epochs)
 
 
 if __name__ == "__main__":
@@ -91,7 +91,9 @@ if __name__ == "__main__":
     parser.add_argument('--use_gpu',  type=bool, default=True)
     parser.add_argument('--gpu_ids',  type=str, default='0')
     parser.add_argument('--workers',  type=int, default=0)
-    parser.add_argument('--epochs',  type=int, default=1)
+    parser.add_argument('--epochs',  type=int, default=30)
+    parser.add_argument('--lam', type=int, default=3e-4)
+    parser.add_argument('--t', type=float, default=1.0)
     parser.add_argument('--random_seed', type=int, default=12345)
     parser.add_argument('--dataset', type=str, default='BJRoad')
     parser.add_argument('--down_scale', type=bool, default=True)
