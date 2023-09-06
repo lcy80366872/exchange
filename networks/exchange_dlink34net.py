@@ -168,11 +168,14 @@ class ResNet(nn.Module):
         self.dblock = DBlock_parallel(filters[3],2)
         # self.dblock_add = DBlock(filters[3])
         # decoder
-        self.decoder4 = DecoderBlock_parallel(filters[3], filters[2],2)
-        self.decoder3 = DecoderBlock_parallel(filters[2], filters[1],2)
-        self.decoder2 = DecoderBlock_parallel(filters[1], filters[0],2)
-        self.decoder1 = DecoderBlock_parallel(filters[0], filters[0],2)
-
+        # self.decoder4 = DecoderBlock_parallel(filters[3], filters[2],2)
+        # self.decoder3 = DecoderBlock_parallel(filters[2], filters[1],2)
+        # self.decoder2 = DecoderBlock_parallel(filters[1], filters[0],2)
+        # self.decoder1 = DecoderBlock_parallel(filters[0], filters[0],2)
+        self.decoder4 = DecoderBlock_parallel_exchange(filters[3], filters[2],2,bn_threshold)
+        self.decoder3 = DecoderBlock_parallel_exchange(filters[2], filters[1], 2, bn_threshold)
+        self.decoder2 = DecoderBlock_parallel_exchange(filters[1], filters[0], 2, bn_threshold)
+        self.decoder1 = DecoderBlock_parallel_exchange(filters[0], filters[0], 2, bn_threshold)
 
         # self.finaldeconv1_add = nn.ConvTranspose2d(filters[0], filters[0] // 2, 4, 2, 1)
         # self.finalrelu1_add = nonlinearity
@@ -184,7 +187,7 @@ class ResNet(nn.Module):
         #self.finalrelu1 = nonlinearity
         self.finalconv2 = ModuleParallel(nn.Conv2d(filters[0] // 2, filters[0] // 2, 3, padding=1))
         self.finalrelu2 = ModuleParallel(nn.ReLU(inplace=True))
-        self.se = SEAttention(filters[0] // 2, reduction=4)
+        # self.se = SEAttention(filters[0] // 2, reduction=4)
         # self.atten=CBAMBlock(channel=filters[0], reduction=4, kernel_size=7)
         self.finalconv = nn.Conv2d(filters[0], num_classes, 3, padding=1)
         # self.finalconv = ModuleParallel(nn.Conv2d(filters[0] // 2, num_classes, 3, padding=1))
@@ -243,8 +246,8 @@ class ResNet(nn.Module):
         x_out = self.finalrelu1(self.finaldeconv1(x_d1))
         x_out = self.finalrelu2(self.finalconv2(x_out))
 
-        x_out[0]=x_out[0]+self.se(x_out[0])
-        x_out[1] =x_out[1]+ self.se(x_out[1])
+        # x_out[0]=x_out[0]+self.se(x_out[0])
+        # x_out[1] =x_out[1]+ self.se(x_out[1])
         # atten=self.atten(torch.cat((x_out[0], x_out[1]), 1))
         out = self.finalconv(torch.cat((x_out[0], x_out[1]), 1))
         # out=self.finalconv(x_out)
