@@ -94,7 +94,42 @@ class DBlock_parallel(nn.Module):
         out = [x[l] + dilate1_out[l] + dilate2_out[l] + dilate3_out[l] + dilate4_out[l] for l in range(self.num_parallel)]
 
         return out
+class DecoderBlock_parallel_exchange(nn.Module):
+    def __init__(self, in_channels, n_filters,num_parallel,bn_threshold):
+        super(DecoderBlock_parallel_exchange, self).__init__()
 
+        self.conv1 = conv1x1(in_channels, in_channels // 4, 1)
+        self.bn1 = BatchNorm2dParallel(in_channels // 4, num_parallel)
+        self.relu1 =  ModuleParallel(nn.ReLU(inplace=True))
+        self.deconv2 = ModuleParallel(nn.ConvTranspose2d(
+            in_channels // 4, in_channels // 4, 3, stride=2, padding=1, output_padding=1
+        ))
+        self.bn2 = BatchNorm2dParallel(in_channels // 4, num_parallel)
+        self.relu2 = ModuleParallel(nn.ReLU(inplace=True))
+        self.conv3 = conv1x1(in_channels // 4, n_filters, 1)
+        self.bn3 = BatchNorm2dParallel(n_filters, num_parallel)
+        self.relu3 = ModuleParallel(nn.ReLU(inplace=True))
+        self.exchange = Exchange()
+        self.bn_threshold = bn_threshold
+        self.bn2_list = []
+        for module in self.bn2.modules():
+            if isinstance(module, nn.BatchNorm2d):
+                self.bn2_list.append(module)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu1(x)
+        x = self.deconv2(x)
+        x = self.bn2(x)
+        if len(x) > 1:
+            x = self.exchange(x, self.bn2_list, self.bn_threshold)
+        x = self.relu2(x)
+        x = self.conv3(x)
+        x = self.bn3(x)
+
+        x = self.relu3(x)
+        return x
 
 class DecoderBlock_parallel(nn.Module):
     def __init__(self, in_channels, n_filters,num_parallel):
