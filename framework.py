@@ -76,7 +76,7 @@ class Solver:
         # lamda =2e-4
         # loss += lamda * L1_norm  # this is actually counted for len(outputs) times
         loss = self.loss(self.mask, pred)
-        print('spare',sparse)
+        #print('spare',sparse)
         loss += sparse
         loss.backward()
         self.optimizer.step()
