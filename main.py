@@ -27,8 +27,7 @@ class Logger(object):
 
 def get_model(model_name):
     if model_name == 'CMMPNet':
-       model =DinkNet34(num_channels=4, encoder_1dconv=0,
-                          decoder_1dconv=4)
+       model =DinkNet34_CMMPNet()
     else:
         print("[ERROR] can not find model ", model_name)
         assert(False)
