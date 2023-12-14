@@ -7,11 +7,10 @@ from torch.nn import init
 import os
 import sys
 import cv2
-from networks.hrnet18 import hrnet18
 from utils.model_init import model_init
 from framework import Framework
 from utils.datasets import prepare_Beijing_dataset, prepare_TLCGIS_dataset
-from networks.exchange_dlink34net import DinkNet34_CMMPNet
+from networks.dlinknet34_cmx import DinkNet34_CMMPNet
 
 class Logger(object):
     def __init__(self, filename="Default.log"):
@@ -54,7 +53,7 @@ def train_val_test(args):
 
     print('lr:',args.lr)
     optimizer = torch.optim.Adam(params=net.parameters(), lr=args.lr)
-    model_init(net, 'resnet34', 2, imagenet=True)
+    # model_init(net, 'resnet34', 2, imagenet=True)
 #     new_state = {}
 #     net.load_state_dict(new_state)
 
@@ -77,12 +76,18 @@ if __name__ == "__main__":
     parser.add_argument('--lr',    type=float, default=2e-4)
     parser.add_argument('--name',  type=str, default='')
     parser.add_argument('--batch_size', type=int, default=1)
-    parser.add_argument('--sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\image')
-    parser.add_argument('--mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\mask')
-    parser.add_argument('--gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\gps')
-    parser.add_argument('--test_sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\image')
-    parser.add_argument('--test_mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\test\mask')
-    parser.add_argument('--test_gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\gps')
+    # parser.add_argument('--sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\image')
+    # parser.add_argument('--mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\mask')
+    # parser.add_argument('--gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\gps')
+    # parser.add_argument('--test_sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\image')
+    # parser.add_argument('--test_mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\test\mask')
+    # parser.add_argument('--test_gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\gps')
+    parser.add_argument('--sat_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/train_val/image')
+    parser.add_argument('--mask_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/train_val/mask')
+    parser.add_argument('--gps_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/train_val/gps')
+    parser.add_argument('--test_sat_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/test/image')
+    parser.add_argument('--test_mask_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/test/mask')
+    parser.add_argument('--test_gps_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/test/gps')
 
     parser.add_argument('--lidar_dir',  type=str, default='')
     parser.add_argument('--split_train_val_test', type=str, default='')
