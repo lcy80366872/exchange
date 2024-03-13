@@ -10,8 +10,8 @@ import cv2
 from utils.model_init import model_init
 from framework import Framework
 from utils.datasets import prepare_Beijing_dataset, prepare_TLCGIS_dataset
-from networks.dlinknet34_cmx import DinkNet34_CMMPNet
-
+from networks.CMIP_dlink34net import DinkNet34_CMIPNet
+from networks.hrnet18 import CMIP_hrnet18
 class Logger(object):
     def __init__(self, filename="Default.log"):
         self.terminal = sys.stdout
@@ -25,8 +25,11 @@ class Logger(object):
         pass
 
 def get_model(model_name):
-    if model_name == 'CMMPNet':
-       model =DinkNet34_CMMPNet()
+    if model_name == 'CMIPNet_Dlinknet34':
+       model =DinkNet34_CMIPNet()
+       model_init(model, 'resnet34', 2, imagenet=True)
+    elif model_name == 'CMIPNet_HRNet':
+       model =CMIP_hrnet18(pretrained=False)
     else:
         print("[ERROR] can not find model ", model_name)
         assert(False)
@@ -53,9 +56,6 @@ def train_val_test(args):
 
     print('lr:',args.lr)
     optimizer = torch.optim.Adam(params=net.parameters(), lr=args.lr)
-    # model_init(net, 'resnet34', 2, imagenet=True)
-#     new_state = {}
-#     net.load_state_dict(new_state)
 
     framework = Framework(net, optimizer, dataset=args.dataset)
     
@@ -72,22 +72,22 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='CMMPNet')
+    parser.add_argument('--model', type=str, default='CMIPNet_Dlinknet34')
     parser.add_argument('--lr',    type=float, default=2e-4)
     parser.add_argument('--name',  type=str, default='')
     parser.add_argument('--batch_size', type=int, default=1)
-    # parser.add_argument('--sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\image')
-    # parser.add_argument('--mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\mask')
-    # parser.add_argument('--gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\gps')
-    # parser.add_argument('--test_sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\image')
-    # parser.add_argument('--test_mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\test\mask')
-    # parser.add_argument('--test_gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\gps')
-    parser.add_argument('--sat_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/train_val/image')
-    parser.add_argument('--mask_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/train_val/mask')
-    parser.add_argument('--gps_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/train_val/gps')
-    parser.add_argument('--test_sat_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/test/image')
-    parser.add_argument('--test_mask_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/test/mask')
-    parser.add_argument('--test_gps_dir', type=str, default='/home/imi432004/BJRoad/BJRoad/test/gps')
+    parser.add_argument('--sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\image')
+    parser.add_argument('--mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\mask')
+    parser.add_argument('--gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\train_val\gps')
+    parser.add_argument('--test_sat_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\image')
+    parser.add_argument('--test_mask_dir', type=str, default=r'E:\ML_data\remote_data\BJRoad\test\mask')
+    parser.add_argument('--test_gps_dir',  type=str, default=r'E:\ML_data\remote_data\BJRoad\test\gps')
+    # parser.add_argument('--sat_dir', type=str, default='/home/nku/hdd/data/BJRoad/BJRoad/train_val/image')
+    # parser.add_argument('--mask_dir', type=str, default='/home/nku/hdd/data/BJRoad/BJRoad/train_val/mask')
+    # parser.add_argument('--gps_dir', type=str, default='/home/nku/hdd/data/BJRoad/BJRoad/train_val/gps')
+    # parser.add_argument('--test_sat_dir', type=str, default='/home/nku/hdd/data/BJRoad/BJRoad/test/image')
+    # parser.add_argument('--test_mask_dir', type=str, default='/home/nku/hdd/data/BJRoad/BJRoad/test/mask')
+    # parser.add_argument('--test_gps_dir', type=str, default='/home/nku/hdd/data/BJRoad/BJRoad/test/gps')
 
     parser.add_argument('--lidar_dir',  type=str, default='')
     parser.add_argument('--split_train_val_test', type=str, default='')
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     parser.add_argument('--random_seed', type=int, default=12345)
     parser.add_argument('--dataset', type=str, default='BJRoad')
     parser.add_argument('--down_scale', type=bool, default=True)
-    parser.add_argument('--cos_lr', type=bool, default=False)
+    parser.add_argument('--cos_lr', type=bool, default=True)
     args = parser.parse_args()
 
     if args.use_gpu:

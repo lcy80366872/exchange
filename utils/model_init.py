@@ -36,7 +36,6 @@ def model_init(model, num_layers, num_parallel, imagenet=False):
     if imagenet:
         key = str(num_layers)
         url = model_urls[key]
-        #下载预训练模型到指定位置
         state_dict = maybe_download(key, url)
         model_dict = expand_model_dict(model.state_dict(), state_dict, num_parallel)
         model.load_state_dict(model_dict, strict=True)

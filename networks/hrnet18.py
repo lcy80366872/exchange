@@ -177,7 +177,7 @@ class SpatialOCR_Module(nn.Module):
 class BasicBlock(nn.Module):
     expansion = 1
 
-    def __init__(self, inplanes, planes, num_parallel, bn_threshold, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, num_parallel, stride=1, downsample=None):
         super(BasicBlock, self).__init__()
 
         self.conv1 = conv3x3(inplanes, planes, stride)
@@ -189,8 +189,8 @@ class BasicBlock(nn.Module):
         self.downsample = downsample
         self.stride = stride
 
-        self.exchange = Exchange()
-        self.bn_threshold = bn_threshold
+        self.cmip = CMIP()
+
         self.bn2_list = []
         for module in self.bn2.modules():
             if isinstance(module, nn.BatchNorm2d):
@@ -207,7 +207,7 @@ class BasicBlock(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
         if len(x) > 1:
-            out = self.exchange(out, self.bn2_list, self.bn_threshold)
+            out = self.cmip(out, self.bn2_list)
 
         if self.downsample is not None:
             residual = self.downsample(x)
@@ -221,7 +221,7 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, num_parallel, bn_threshold, stride=1, downsample=None):
+    def __init__(self, inplanes, planes, num_parallel, stride=1, downsample=None):
         super(Bottleneck, self).__init__()
         self.conv1 = conv1x1(inplanes, planes)
         self.bn1 = BatchNorm2dParallel(planes, num_parallel)
@@ -234,8 +234,7 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
 
-        self.exchange = Exchange()
-        self.bn_threshold = bn_threshold
+        self.cmip = CMIP()
         self.bn2_list = []
         for module in self.bn2.modules():
             if isinstance(module, nn.BatchNorm2d):
@@ -251,7 +250,7 @@ class Bottleneck(nn.Module):
         out = self.conv2(out)
         out = self.bn2(out)
         if len(x) > 1:
-            out = self.exchange(out, self.bn2_list, self.bn_threshold)
+            out = self.cmip(out, self.bn2_list)
         out = self.relu(out)
 
         out = self.conv3(out)
@@ -267,7 +266,7 @@ class Bottleneck(nn.Module):
 
 
 class StageModule(nn.Module):
-    def __init__(self, input_branches, output_branches, c, bn_threshold, num_parallel=2):
+    def __init__(self, input_branches, output_branches, c, num_parallel=2):
         """
         构建对应stage，即用来融合不同尺度的实现
         :param input_branches: 输入的分支数，每个分支对应一种尺度
@@ -282,10 +281,10 @@ class StageModule(nn.Module):
         for i in range(self.input_branches):  # 每个分支上都先通过4个BasicBlock
             w = c * (2 ** i)  # 对应第i个分支的通道数
             branch = nn.Sequential(
-                BasicBlock(w, w, num_parallel, bn_threshold),
-                BasicBlock(w, w, num_parallel, bn_threshold),
-                BasicBlock(w, w, num_parallel, bn_threshold),
-                BasicBlock(w, w, num_parallel, bn_threshold)
+                BasicBlock(w, w, num_parallel),
+                BasicBlock(w, w, num_parallel),
+                BasicBlock(w, w, num_parallel),
+                BasicBlock(w, w, num_parallel)
             )
             self.branches.append(branch)
 
@@ -359,7 +358,7 @@ class StageModule(nn.Module):
 
 
 class HighResolutionNet(nn.Module):
-    def __init__(self, bn_threshold, base_channel: int = 18, num_parallel=2):
+    def __init__(self, base_channel: int = 18, num_parallel=2):
         super().__init__()
         # Stem
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=2, padding=1, bias=False)
@@ -379,10 +378,10 @@ class HighResolutionNet(nn.Module):
             BatchNorm2dParallel(256, num_parallel)
         )
         self.layer1 = nn.Sequential(
-            Bottleneck(64, 64, num_parallel, bn_threshold, downsample=downsample),
-            Bottleneck(256, 64, num_parallel, bn_threshold),
-            Bottleneck(256, 64, num_parallel, bn_threshold),
-            Bottleneck(256, 64, num_parallel, bn_threshold)
+            Bottleneck(64, 64, num_parallel, downsample=downsample),
+            Bottleneck(256, 64, num_parallel),
+            Bottleneck(256, 64, num_parallel),
+            Bottleneck(256, 64, num_parallel)
         )
 
         self.transition1 = nn.ModuleList([
@@ -402,7 +401,7 @@ class HighResolutionNet(nn.Module):
 
         # Stage2
         self.stage2 = nn.Sequential(
-            StageModule(input_branches=2, output_branches=2, c=base_channel, bn_threshold=bn_threshold)
+            StageModule(input_branches=2, output_branches=2, c=base_channel)
         )
 
         # transition2
@@ -421,10 +420,10 @@ class HighResolutionNet(nn.Module):
 
         # Stage3
         self.stage3 = nn.Sequential(
-            StageModule(input_branches=3, output_branches=3, c=base_channel, bn_threshold=bn_threshold),
-            StageModule(input_branches=3, output_branches=3, c=base_channel, bn_threshold=bn_threshold),
-            StageModule(input_branches=3, output_branches=3, c=base_channel, bn_threshold=bn_threshold),
-            StageModule(input_branches=3, output_branches=3, c=base_channel, bn_threshold=bn_threshold)
+            StageModule(input_branches=3, output_branches=3, c=base_channel),
+            StageModule(input_branches=3, output_branches=3, c=base_channel),
+            StageModule(input_branches=3, output_branches=3, c=base_channel),
+            StageModule(input_branches=3, output_branches=3, c=base_channel)
         )
 
         # transition3
@@ -445,9 +444,9 @@ class HighResolutionNet(nn.Module):
         # Stage4
         # 注意，最后一个StageModule只输出分辨率最高的特征层
         self.stage4 = nn.Sequential(
-            StageModule(input_branches=4, output_branches=4, c=base_channel, bn_threshold=bn_threshold),
-            StageModule(input_branches=4, output_branches=4, c=base_channel, bn_threshold=bn_threshold),
-            StageModule(input_branches=4, output_branches=4, c=base_channel, bn_threshold=bn_threshold)
+            StageModule(input_branches=4, output_branches=4, c=base_channel),
+            StageModule(input_branches=4, output_branches=4, c=base_channel),
+            StageModule(input_branches=4, output_branches=4, c=base_channel)
         )
 
         # Final layer
@@ -590,18 +589,19 @@ def expand_model_dict(model_dict, state_dict, num_parallel):
     return model_dict
 
 
-def hrnet18(pretrained):
-    pretrained_dict = torch.load(
-        'pre-trained_weights/hrnetv2_w18_imagenet_pretrained.pth')
-    model = HighResolutionNet(bn_threshold=0.02, base_channel=18)
+def CMIP_hrnet18(pretrained):
+
+    model = HighResolutionNet(base_channel=18)
     if pretrained:
+        pretrained_dict = torch.load(
+            'pre-trained_weights/hrnetv2_w18_imagenet_pretrained.pth')
         print('=> loading pretrained model {}'.format(pretrained))
         num_parallel = 2
         model_dict = expand_model_dict(model.state_dict(), pretrained_dict, num_parallel)
         model.load_state_dict(model_dict, strict=True)
     return model
 
-model = hrnet18(pretrained=True)
-input = torch.randn([2, 4, 512, 512], dtype=torch.float)
-output = model(input)
-print(output.shape)
+# model = CMIP_hrnet18(pretrained=True)
+# input = torch.randn([2, 4, 512, 512], dtype=torch.float)
+# output = model(input)
+# print(output.shape)

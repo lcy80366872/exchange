@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="imi432004@222.30.62.15:22 password (2)" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
+  <component name="PublishConfigData" autoUpload="Always" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
       <paths name="imi432004@222.30.62.15:22 password">
@@ -14,6 +14,13 @@
         <serverdata>
           <mappings>
             <mapping deploy="/home/imi432004/cmx11" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="nku@10.134.73.103:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/nku/experiment" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

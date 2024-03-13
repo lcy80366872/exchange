@@ -8,7 +8,7 @@ from loss import dice_bce_loss
 import copy
 import numpy
 
-def _compute_polarization_sparsity(sparse_modules: list, lbd, t, alpha, bn_weights_mean):
+def compute_information_balanced_sparsity(sparse_modules: list, lbd, t, alpha, bn_weights_mean):
     sparsity_loss = 0
     n=0
     for m in sparse_modules:
@@ -48,7 +48,7 @@ class Solver:
                     self.mask = Variable(self.mask.cuda())
             else:
                 self.mask = Variable(self.mask.cuda())
-    def optimize_exchange(self,lam,t):
+    def optimize(self,lam,t):
         self.net.train()
         self.data2cuda()
 
@@ -63,7 +63,7 @@ class Solver:
                 slim_params.append(param)
                 mean_params.append(torch.mean(param))
 
-        sparse = _compute_polarization_sparsity(slim_params, lbd=lam, t=t, alpha=1, bn_weights_mean=mean_params)
+        sparse = compute_information_balanced_sparsity(slim_params, lbd=lam, t=t, alpha=1, bn_weights_mean=mean_params)
         # L1 spare
         # for name, param in self.net.named_parameters():
         #     if param.requires_grad and name.endswith('weight') and 'bn2' in name:
@@ -76,7 +76,7 @@ class Solver:
         # lamda =2e-4
         # loss += lamda * L1_norm  # this is actually counted for len(outputs) times
         loss = self.loss(self.mask, pred)
-        print('spare',sparse)
+
         loss += sparse
         loss.backward()
         self.optimizer.step()
@@ -179,7 +179,7 @@ class Framework:
             self.solver.set_input(img, mask)
             # print('img_data:',img.shape)
             if mode == 'training':
-                pred_map, iter_loss, batch_iou, samples_intersection, samples_union = self.solver.optimize_exchange(lam=lam,t=t)
+                pred_map, iter_loss, batch_iou, samples_intersection, samples_union = self.solver.optimize(lam=lam,t=t)
             else:
                 pred_map, iter_loss, batch_iou, samples_intersection, samples_union = self.solver.test_batch()
 
