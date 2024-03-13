@@ -59,9 +59,13 @@ class Solver:
         sparse = 0
         # POL1 spare
         for name, param in self.net.named_parameters():
-            if param.requires_grad and name.endswith('weight') and 'bn2' in name:
-                slim_params.append(param)
-                mean_params.append(torch.mean(param))
+            if param.requires_grad and name.endswith('weight') and 'bn2' in name :
+                if len(slim_params) % 2 == 0:
+                    slim_params.append(param[:len(param) // 2])
+                    mean_params.append(torch.mean(param[:len(param) // 2]))
+                else:
+                    slim_params.append(param[len(param) // 2:])
+                    mean_params.append(torch.mean(param[len(param) // 2:]))
 
         sparse = compute_information_balanced_sparsity(slim_params, lbd=lam, t=t, alpha=1, bn_weights_mean=mean_params)
         # L1 spare
@@ -76,7 +80,11 @@ class Solver:
         # lamda =2e-4
         # loss += lamda * L1_norm  # this is actually counted for len(outputs) times
         loss = self.loss(self.mask, pred)
+<<<<<<< HEAD
 
+=======
+        #print('spare',sparse)
+>>>>>>> cdfcc4d8e9e92b07d598a350e9fa825b08ca2097
         loss += sparse
         loss.backward()
         self.optimizer.step()
