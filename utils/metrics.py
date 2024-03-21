@@ -24,6 +24,7 @@ class IoU(nn.Module):
 
     def forward(self, target, inputs):
         # the inputs should be resized to the resolution of the target for evaluation
+
         if inputs.shape[2] != target.shape[2] or inputs.shape[3] != target.shape[3]:
            inputs = self.resize(inputs, target.shape[2], target.shape[3]).cuda()
         
